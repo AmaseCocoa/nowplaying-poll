@@ -53,6 +53,7 @@ func sendPosts(track PlayingNowTrackMetadata, sender SocialSender) {
 
 	toot := &mastodon.Toot{
 		Status: text,
+		Visibility: mastodon.VisibilityFollowersOnly,
 	}
 	_, err := sender.mastodon.PostStatus(context.Background(), toot)
 	if err != nil {
