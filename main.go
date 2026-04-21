@@ -37,7 +37,7 @@ type PlayingNowResponse struct {
 }
 
 type SocialSender struct {
-	tmpl *template.Template
+	tmpl     *template.Template
 	mastodon *mastodon.Client
 }
 
@@ -45,12 +45,12 @@ func sendPosts(track PlayingNowTrackMetadata, sender SocialSender) {
 	data := map[string]string{
 		"Track":  track.TrackName,
 		"Artist": track.ArtistName,
-		"Album": track.ReleaseName,
+		"Album":  track.ReleaseName,
 	}
 	var doc bytes.Buffer
 	sender.tmpl.Execute(&doc, data)
 	text := doc.String()
-	
+
 	toot := &mastodon.Toot{
 		Status: text,
 	}
@@ -62,14 +62,13 @@ func sendPosts(track PlayingNowTrackMetadata, sender SocialSender) {
 
 func setupSender(db *bbolt.DB, template *template.Template) SocialSender {
 	mastodonInstance := os.Getenv("MASTODON_INSTANCE")
-	mstdn := MastodonSender {
+	mstdn := MastodonSender{
 		host: mastodonInstance,
-		db: db,
+		db:   db,
 	}
-	
-	
-	return SocialSender {
-		tmpl: template,
+
+	return SocialSender{
+		tmpl:     template,
 		mastodon: mstdn.GetToken(),
 	}
 }
@@ -77,30 +76,34 @@ func setupSender(db *bbolt.DB, template *template.Template) SocialSender {
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-	    log.Fatal("Error loading .env file")
-	}
-		
-	username := os.Getenv("LISTENBRAINZ_USER")
-	url := fmt.Sprintf("https://api.listenbrainz.org/1/user/%s/playing-now", username)
-	var tmpl *template.Template
-	if postTemplate, exists := os.LookupEnv("SOCIAL_SENDER_FORMAT"); exists {
-	    postTemplate = strings.ReplaceAll(postTemplate, "\\n", "\n")
-	    tmpl, _ = template.New("socialSenderTmpl").Parse(postTemplate)
-	} else {
-	    tmpl, _ = template.New("socialSenderTmpl").Parse("{{.Track}} - {{.Artist}} ({{.Album}})\n#NowPlaying")
+		log.Fatal("Error loading .env file")
 	}
 
-	
+	username := os.Getenv("LISTENBRAINZ_USER")
+	url := fmt.Sprintf("https://api.listenbrainz.org/1/user/%s/playing-now", username)
+	defaultTemplate := "{{.Track}} - {{.Artist}} ({{.Album}})\n#NowPlaying"
+	var tmpl *template.Template
+	if postTemplate, exists := os.LookupEnv("SOCIAL_SENDER_FORMAT"); exists {
+		postTemplate = strings.ReplaceAll(postTemplate, "\\n", "\n")
+		tmpl, err = template.New("socialSenderTmpl").Parse(postTemplate)
+		if err != nil {
+			log.Fatalf("Failed to parse template: %v; fallback to default template", err)
+			tmpl, _ = template.New("socialSenderTmpl").Parse(defaultTemplate)
+		}
+	} else {
+		tmpl, _ = template.New("socialSenderTmpl").Parse(defaultTemplate)
+	}
+
 	dbPath := "my.db"
-    if dbDir, exists := os.LookupEnv("DB_DIR"); exists {
-        dbPath = filepath.Join(dbDir, "my.db")
-    }
-	
+	if dbDir, exists := os.LookupEnv("DB_DIR"); exists {
+		dbPath = filepath.Join(dbDir, "my.db")
+	}
+
 	db, _ := bbolt.Open(dbPath, 0600, nil)
 	defer db.Close()
 
 	sender := setupSender(db, tmpl)
-	
+
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
@@ -113,7 +116,7 @@ func main() {
 		if listenBrainzToken, exists := os.LookupEnv("LISTENBRAINZ_TOKEN"); exists {
 			req.Header.Set("Authorization", fmt.Sprintf("Token %s", listenBrainzToken))
 		}
-		
+
 		resp, err := client.Do(req)
 		if err != nil {
 			continue
@@ -135,7 +138,7 @@ func main() {
 			listening := data.Payload.Listens[0]
 			track := listening.TrackMetadata
 			data, _ := getData(db, username)
-			
+
 			if data == nil || *data != listening {
 				sendPosts(track, sender)
 				updateData(db, username, listening)
