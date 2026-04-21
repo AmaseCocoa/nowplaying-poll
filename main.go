@@ -53,7 +53,7 @@ func sendPosts(track PlayingNowTrackMetadata, sender SocialSender) {
 
 	toot := &mastodon.Toot{
 		Status: text,
-		Visibility: mastodon.VisibilityFollowersOnly,
+		Visibility: mastodon.VisibilityUnlisted , // VisibilityFollowersOnly
 	}
 	_, err := sender.mastodon.PostStatus(context.Background(), toot)
 	if err != nil {
@@ -82,16 +82,12 @@ func main() {
 
 	username := os.Getenv("LISTENBRAINZ_USER")
 	url := fmt.Sprintf("https://api.listenbrainz.org/1/user/%s/playing-now", username)
+	
 	defaultTemplate := "{{.Track}} - {{.Artist}} ({{.Album}})\n#NowPlaying"
 	var tmpl *template.Template
-	if postTemplate, exists := os.LookupEnv("SOCIAL_SENDER_FORMAT"); exists {
-		postTemplate = strings.ReplaceAll(postTemplate, "\\n", "\n")
-		tmpl, err = template.New("socialSenderTmpl").Parse(postTemplate)
-		if err != nil {
-			log.Fatalf("Failed to parse template: %v; fallback to default template", err)
-			tmpl, _ = template.New("socialSenderTmpl").Parse(defaultTemplate)
-		}
-	} else {
+	tmpl, err = template.New("socialSenderTmpl").ParseFiles("post.txt")
+	if err != nil {
+		log.Fatalf("Failed to parse template: %v; fallback to default template", err)
 		tmpl, _ = template.New("socialSenderTmpl").Parse(defaultTemplate)
 	}
 
