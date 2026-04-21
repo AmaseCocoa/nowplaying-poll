@@ -11,7 +11,8 @@ import (
 	"os"
 	"text/template"
 	"time"
-
+    "path/filepath"
+    
 	"github.com/joho/godotenv"
 	"github.com/mattn/go-mastodon"
 	"go.etcd.io/bbolt"
@@ -87,7 +88,12 @@ func main() {
 		tmpl, _ = template.New("socialSenderTmpl").Parse("{{.Track}} - {{.Artist}} ({{.Album}})\n#NowPlaying")
 	}
 	
-	db, _ := bbolt.Open("my.db", 0600, nil)
+	dbPath := "my.db"
+    if dbDir, exists := os.LookupEnv("DB_DIR"); exists {
+        dbPath = filepath.Join(dbDir, "my.db")
+    }
+	
+	db, _ := bbolt.Open(dbPath, 0600, nil)
 	defer db.Close()
 
 	sender := setupSender(db, tmpl)

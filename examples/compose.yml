@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      - DB_DIR=/data
+    volumes:
+      - db-data:/data
+
+volumes:
+  db-data:

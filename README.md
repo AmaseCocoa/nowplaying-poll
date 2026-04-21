@@ -24,6 +24,7 @@ go build -o nowplaying-poll
 - MASTODON_INSTANCE (必須): 投稿先 Mastodon インスタンス URL (例: https://mastodon.example)
 - SOCIAL_SENDER_FORMAT (任意): 投稿テンプレート（Go の text/template 構文）。デフォルト: `{{.Track}} - {{.Artist}} ({{.Album}})\n#NowPlaying`
 - LISTENBRAINZ_TOKEN (任意): ListenBrainz の API トークン（必要な場合）
+- DB_DIR (任意): 通常は設定する必要はありません。 (Dockerで実行する場合などは/dataに変更することをおすすめします)
 
 初回に Mastodon のクレデンシャルが保存されていない場合、アプリが OAuth の登録 URL を表示し、認証コードの入力を促します。アクセストークン等は my.db の BoltDB バケット `MastodonCredentials` に保存されます。
 
