@@ -9,10 +9,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
-    "path/filepath"
-    
+
 	"github.com/joho/godotenv"
 	"github.com/mattn/go-mastodon"
 	"go.etcd.io/bbolt"
@@ -83,10 +84,12 @@ func main() {
 	url := fmt.Sprintf("https://api.listenbrainz.org/1/user/%s/playing-now", username)
 	var tmpl *template.Template
 	if postTemplate, exists := os.LookupEnv("SOCIAL_SENDER_FORMAT"); exists {
-		tmpl, _ = template.New("socialSenderTmpl").Parse(postTemplate)
+	    postTemplate = strings.ReplaceAll(postTemplate, "\\n", "\n")
+	    tmpl, _ = template.New("socialSenderTmpl").Parse(postTemplate)
 	} else {
-		tmpl, _ = template.New("socialSenderTmpl").Parse("{{.Track}} - {{.Artist}} ({{.Album}})\n#NowPlaying")
+	    tmpl, _ = template.New("socialSenderTmpl").Parse("{{.Track}} - {{.Artist}} ({{.Album}})\n#NowPlaying")
 	}
+
 	
 	dbPath := "my.db"
     if dbDir, exists := os.LookupEnv("DB_DIR"); exists {
