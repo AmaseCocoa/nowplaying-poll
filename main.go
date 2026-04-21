@@ -83,11 +83,13 @@ func main() {
 	url := fmt.Sprintf("https://api.listenbrainz.org/1/user/%s/playing-now", username)
 	
 	defaultTemplate := "{{.Track}} - {{.Artist}} ({{.Album}})\n#NowPlaying"
-	var tmpl *template.Template
-	tmpl, err = template.New("socialSenderTmpl").ParseFiles("post.txt")
+	tmpl := template.New("socialSenderTmpl")
+	t, err := tmpl.ParseFiles("post.txt")
 	if err != nil {
-		log.Fatalf("Failed to parse template: %v; fallback to default template", err)
-		tmpl, _ = template.New("socialSenderTmpl").Parse(defaultTemplate)
+		log.Printf("Failed to parse post.txt: %v; fallback to default", err)
+		tmpl, _ = tmpl.Parse(defaultTemplate)
+	} else {
+		tmpl = t.Lookup("post.txt")
 	}
 
 	dbPath := "my.db"

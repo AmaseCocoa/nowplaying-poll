@@ -1,2 +1,2 @@
-{.Track}} - {{.Artist}} ({{.Album}})
+{{.Track}} - {{.Artist}} ({{.Album}})
 #NowPlaying
